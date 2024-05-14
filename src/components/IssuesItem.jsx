@@ -3,6 +3,8 @@ import {Link} from "react-router-dom";
 import {relativeDate} from "../helpers/relativeDate";
 import {useUserData} from "../helpers/useUserData";
 import Labels from "./Labels";
+import {useQueryClient} from "react-query";
+import fetchWithErrors from "../helpers/fetchWithErrors";
 
 function IssueItem({
                        title,
@@ -16,8 +18,14 @@ function IssueItem({
                    }){
     const assigneeUser = useUserData(assignee);
     const createdByUser = useUserData(createdBy);
+    const queryClient = useQueryClient()
     return (
-        <li>
+        <li onMouseEnter={
+            () =>{ queryClient.prefetchQuery(["issues",number.toString()],()=>{return fetchWithErrors(`/api/issues/${number}`)},{
+                staleTime:Infinity,
+            })
+                queryClient.prefetchQuery(["issues",number.toString(),"comments"],()=>{fetchWithErrors(`/api/issues/${number}/comments`)})
+            }}>
             <div>
                 {status === 'done' || status === 'cancelled' ? (
                     <GoIssueClosed style={{color: 'red'}}/>

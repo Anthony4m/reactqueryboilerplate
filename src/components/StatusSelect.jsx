@@ -8,10 +8,11 @@ const possibleStatus = [
     {id: "cancelled",label:"Cancelled"},
 ]
 
-const StatusSelect = ({value,onChange}) =>{
+const StatusSelect = ({value,onChange,noEmptyOption=false}) =>{
+
    return (
        <select className="status-select" value={value} onChange={onChange}>
-           <option value="">Select A value to filter</option>
+           {noEmptyOption ? null : <option value="">Select A value to filter</option>}
            {possibleStatus.map(status=>(
                <option key={status.id} value={status.id}>{status.label}</option>
            ))}

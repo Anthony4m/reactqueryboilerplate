@@ -3,10 +3,11 @@ import {useQuery} from "react-query";
 import {IssueHeader} from "./IssueHeader";
 import {useUserData} from "../helpers/useUserData";
 import {relativeDate} from "../helpers/relativeDate";
+import IssueStatus from "./IssueStatus";
 
 function useIssueData(issueNumber){
-  return useQuery(["issue",issueNumber],()=>{
-    return fetch(`/api/issues/${issueNumber}`)
+  return useQuery(["issue",issueNumber],({signal})=>{
+    return fetch(`/api/issues/${issueNumber}`,{signal})
         .then(res=>res.json())
   },{
     staleTime: 1000*60*2
@@ -14,7 +15,7 @@ function useIssueData(issueNumber){
 }
 function useIssueComments(issueNumber){
   return useQuery(["issues",issueNumber,"comments"],
-      ()=> fetch(`/api/issues/${issueNumber}/comments`)
+      ({signal})=> fetch(`/api/issues/${issueNumber}/comments`,{signal})
           .then(res=>res.json()
           ),{
     staleTime: 1000 * 60 * 2
@@ -25,7 +26,7 @@ function Comment({comment,createdBy,createdDate}){
 
   if (userQuery.isLoading)return<div className="comment">
     <div className="comment-header">
-      Loading...S
+      Loading...
     </div>
   </div>
   
@@ -57,7 +58,7 @@ export default function IssueDetails() {
                   ))}
             </section>
             <aside>
-
+              <IssueStatus status={issueQuery.data.status} issueNumber={issueQuery.data.number.toString()}/>
             </aside>
           </main>
         </>}

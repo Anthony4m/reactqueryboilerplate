@@ -1,22 +1,27 @@
-import {useQuery} from "react-query";
+import {useQuery, useQueryClient} from "react-query";
 import IssueItem from "./IssuesItem";
 import {useState} from "react";
+import fetchWithErrors from "../helpers/fetchWithErrors";
+import Loader from "./Loader";
 
 
 export default function IssuesList({labels,status}) {
+    const queryClient = useQueryClient();
     const issueQuery = useQuery(['issues',{labels},{status}],
-        () => {
+        async ({signal}) => {
             const statusString = status ? `&status=${status}` : "";
             const labelString = labels.map(label=>`labels[]=${label}`).join('&')
-            return fetch(`/api/issues?${labelString}${statusString}`).then(res=>res.json())
-        },{
-        staleTime:1000*60*2
-        }
-    );
+            const results = await fetchWithErrors(`/api/issues?${labelString}${statusString}`,{signal})
+
+            results.forEach((issue)=>{
+                queryClient.setQueryData(["issues",issue.number.toString()],issue);
+            })
+            return results;
+        });
     const [searchValue,setSearchValue] = useState("")
 
     const searchQuery = useQuery(['issues',"search",{searchValue}],
-        ()=> fetch(`/api/search/issues?q=${searchValue}`).then(res=>res.json()),
+        ({signal})=> fetch(`/api/search/issues?q=${searchValue}`,{signal}).then(res=>res.json()),
         {
             enabled: searchValue.length > 0,
             staleTime: 1000 * 60 * 2
@@ -35,9 +40,9 @@ export default function IssuesList({labels,status}) {
                     }}
                 }/>
             </form>
-            <h2>Issues List</h2>
+            <h2>Issues List {issueQuery.isFetching ? <Loader/> : null}</h2>
             { issueQuery.isLoading ? (<p>Loading....</p>)
-                : searchQuery.fetchStatus === "idle" && searchQuery.isLoading === true ?
+                : issueQuery.isError ? <p>{issueQuery.error.message}</p> :searchQuery.fetchStatus === "idle" && searchQuery.isLoading === true ?
                     (<ul className="issues-list">
                         {issueQuery.data.map((issue)=>(
                             <IssueItem key={issue.id}
