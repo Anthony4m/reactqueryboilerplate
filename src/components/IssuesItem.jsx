@@ -1,54 +1,74 @@
-import {GoComment, GoIssueClosed, GoIssueOpened} from "react-icons/go";
-import {Link} from "react-router-dom";
-import {relativeDate} from "../helpers/relativeDate";
-import {useUserData} from "../helpers/useUserData";
-import Labels from "./Labels";
-import {useQueryClient} from "react-query";
+import { Link } from "react-router-dom";
+import { GoIssueOpened, GoIssueClosed, GoComment } from "react-icons/go";
+import { relativeDate } from "../helpers/relativeDate";
+import { useUserData } from "../helpers/useUserData";
+import { Label } from "./Label";
+import { useQueryClient } from "react-query";
 import fetchWithErrors from "../helpers/fetchWithErrors";
 
-function IssueItem({
-                       title,
-                       number,
-                       assignee,
-                       commentCount,
-                       createdBy,
-                       createdDate,
-                       labels,
-                       status,
-                   }){
+export function IssueItem({
+                              title,
+                              number,
+                              assignee,
+                              commentCount,
+                              createdBy,
+                              createdDate,
+                              labels,
+                              status,
+                          }) {
     const assigneeUser = useUserData(assignee);
     const createdByUser = useUserData(createdBy);
-    const queryClient = useQueryClient()
+    const queryClient = useQueryClient();
     return (
-        <li onMouseEnter={
-            () =>{ queryClient.prefetchQuery(["issues",number.toString()],()=>{return fetchWithErrors(`/api/issues/${number}`)},{
-                staleTime:Infinity,
-            })
-                queryClient.prefetchQuery(["issues",number.toString(),"comments"],()=>{fetchWithErrors(`/api/issues/${number}/comments`)})
-            }}>
+        <li
+            onMouseEnter={() => {
+                queryClient.prefetchQuery(["issues", number.toString()], () =>
+                    fetchWithErrors(`/api/issues/${number}`)
+                );
+                queryClient.prefetchQuery(
+                    ["issues", number.toString(), "comments"],
+                    () => fetchWithErrors(`/api/issues/${number}/comments?page=1`)
+                );
+            }}
+        >
             <div>
-                {status === 'done' || status === 'cancelled' ? (
-                    <GoIssueClosed style={{color: 'red'}}/>
-                ) : (<GoIssueOpened style={{color: 'green'}}/>)}
+                {status === "done" || status === "cancelled" ? (
+                    <GoIssueClosed style={{ color: "red" }} />
+                ) : (
+                    <GoIssueOpened style={{ color: "green" }} />
+                )}
             </div>
             <div className="issue-content">
-                <span>
-                <Link to={`/issue/${number}`}>{title}</Link>
-                    {labels.map((label)=>(
-                        <Labels key={label.indexOf(label)} label={label}/>
-                    ))}
-                </span>
+        <span>
+          <Link to={`/issue/${number}`}>{title}</Link>
+            {labels.map((label) => (
+                <Label key={label} label={label} />
+            ))}
+        </span>
                 <small>
-                    #{number} opened {relativeDate(createdDate)} createdBy {createdByUser.isSuccess ? `by ${createdByUser.data.name}` : "loading..."}
+                    #{number} opened {relativeDate(createdDate)}{" "}
+                    {createdByUser.isSuccess ? `by ${createdByUser.data.name}` : ""}
                 </small>
             </div>
-            {assignee ? <img className="assigned-to" alt={`assigned to ${assigneeUser.isSuccess ? assigneeUser.data.name : 'avatar'}`} src={assigneeUser.isSuccess ? assigneeUser.data.profilePictureUrl: ""}/>  : ''}
-            <span className='comment-count'>{commentCount > 0 ? (
-                <>
-                    <GoComment/> {commentCount}
-                </>
-            ) : " "}</span>
+            {assignee ? (
+                <img
+                    src={
+                        assigneeUser.isSuccess ? assigneeUser.data.profilePictureUrl : ""
+                    }
+                    className="assigned-to"
+                    alt={`Assigned to ${
+                        assigneeUser.isSuccess ? assigneeUser.data.name : "avatar"
+                    }`}
+                />
+            ) : null}
+            <span className="comment-count">
+        {commentCount > 0 ? (
+            <>
+                <GoComment />
+                {commentCount}
+            </>
+        ) : null}
+      </span>
         </li>
-    )
+    );
 }
-export default IssueItem
