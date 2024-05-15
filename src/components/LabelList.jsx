@@ -1,4 +1,4 @@
-import labels from "./Labels";
+import {Label} from "./Label";
 import {useLabelsData} from "../helpers/useLabelsData";
 
 export default function LabelList({selected,toggle}) {
